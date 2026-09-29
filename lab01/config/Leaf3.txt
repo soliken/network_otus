@@ -1,0 +1,58 @@
+Leaf-3#show run
+! Command: show running-config
+! device: Leaf-3 (vEOS-lab, EOS-4.33.1.1F)
+!
+! boot system flash:/vEOS-lab.swi
+!
+no aaa root
+!
+no service interface inactive port-id allocation disabled
+!
+transceiver qsfp default-mode 4x10G
+!
+service routing protocols model multi-agent
+!
+hostname Leaf-3
+!
+spanning-tree mode mstp
+!
+system l1
+   unsupported speed action error
+   unsupported error-correction action error
+!
+interface Ethernet1
+   no switchport
+   ip address 10.0.0.17/30
+!
+interface Ethernet2
+   no switchport
+   ip address 10.0.0.21/30
+!
+interface Ethernet3
+   shutdown
+!
+interface Ethernet4
+   shutdown
+!
+interface Ethernet5
+   shutdown
+!
+interface Ethernet6
+   shutdown
+!
+interface Ethernet7
+   shutdown
+!
+interface Management1
+!
+no ip routing
+!
+router multicast
+   ipv4
+      software-forwarding kernel
+   !
+   ipv6
+      software-forwarding kernel
+!
+end
+Leaf-3#
