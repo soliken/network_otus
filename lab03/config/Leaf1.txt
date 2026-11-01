@@ -1,0 +1,76 @@
+Leaf-1#show run
+! Command: show running-config
+! device: Leaf-1 (vEOS-lab, EOS-4.33.1.1F)
+!
+! boot system flash:/vEOS-lab.swi
+!
+no aaa root
+!
+no service interface inactive port-id allocation disabled
+!
+transceiver qsfp default-mode 4x10G
+!
+service routing protocols model multi-agent
+!
+hostname Leaf-1
+!
+spanning-tree mode mstp
+!
+system l1
+   unsupported speed action error
+   unsupported error-correction action error
+!
+interface Ethernet1
+   description Spine1
+   no switchport
+   ip address 10.0.0.1/30
+   isis enable OTUS
+   isis bfd
+   isis network point-to-point
+!
+interface Ethernet2
+   description Spine2
+   no switchport
+   ip address 10.0.0.5/30
+   isis enable OTUS
+   isis bfd
+   isis network point-to-point
+!
+interface Ethernet3
+   shutdown
+!
+interface Ethernet4
+   shutdown
+!
+interface Ethernet5
+   shutdown
+!
+interface Ethernet6
+   shutdown
+!
+interface Ethernet7
+   shutdown
+!
+interface Loopback1
+   ip address 10.10.10.3/32
+   isis enable OTUS
+   isis passive
+!
+interface Management1
+!
+ip routing
+!
+router isis OTUS
+   net 49.0001.0000.0000.0003.00
+   is-type level-2
+   !
+   address-family ipv4 unicast
+!
+router multicast
+   ipv4
+      software-forwarding kernel
+   !
+   ipv6
+      software-forwarding kernel
+!
+end
