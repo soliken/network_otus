@@ -1,0 +1,87 @@
+Leaf-1#sh run
+! Command: show running-config
+! device: Leaf-1 (vEOS-lab, EOS-4.33.1.1F)
+!
+! boot system flash:/vEOS-lab.swi
+!
+no aaa root
+!
+no service interface inactive port-id allocation disabled
+!
+transceiver qsfp default-mode 4x10G
+!
+service routing protocols model multi-agent
+!
+hostname Leaf-1
+!
+spanning-tree mode mstp
+!
+system l1
+   unsupported speed action error
+   unsupported error-correction action error
+!
+interface Ethernet1
+   description Spine1
+   no switchport
+   ip address 10.0.0.1/30
+!
+interface Ethernet2
+   description Spine2
+   no switchport
+   ip address 10.0.0.5/30
+!
+interface Ethernet3
+   description PC-1
+   no switchport
+   ip address 10.20.20.1/24
+!
+interface Ethernet4
+   shutdown
+!
+interface Ethernet5
+   shutdown
+!
+interface Ethernet6
+   shutdown
+!
+interface Ethernet7
+   shutdown
+!
+interface Loopback1
+   ip address 10.10.10.3/32
+!
+interface Management1
+!
+ip routing
+!
+ip prefix-list RM_FROM_CONNECTED seq 10 deny 10.0.0.0/24 le 32
+ip prefix-list RM_FROM_CONNECTED seq 20 permit 0.0.0.0/0 le 32
+!
+route-map RM_FROM_CONNECTED_BGP permit 10
+   match ip address prefix-list RM_FROM_CONNECTED
+!
+router bgp 64602
+   router-id 10.10.10.3
+   maximum-paths 2 ecmp 2
+   neighbor SPINE peer group
+   neighbor SPINE bfd
+   neighbor SPINE timers 3 9
+   neighbor 10.0.0.2 peer group SPINE
+   neighbor 10.0.0.2 remote-as 64601
+   neighbor 10.0.0.2 description Spine1
+   neighbor 10.0.0.6 peer group SPINE
+   neighbor 10.0.0.6 remote-as 64601
+   neighbor 10.0.0.6 description Spine2
+   !
+   address-family ipv4
+      neighbor SPINE activate
+      redistribute connected route-map RM_FROM_CONNECTED_BGP
+!
+router multicast
+   ipv4
+      software-forwarding kernel
+   !
+   ipv6
+      software-forwarding kernel
+!
+end
