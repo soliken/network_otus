@@ -1,0 +1,92 @@
+Spine-1#sh run
+! Command: show running-config
+! device: Spine-1 (vEOS-lab, EOS-4.33.1.1F)
+!
+! boot system flash:/vEOS-lab.swi
+!
+no aaa root
+!
+no service interface inactive port-id allocation disabled
+!
+transceiver qsfp default-mode 4x10G
+!
+service routing protocols model multi-agent
+!
+hostname Spine-1
+!
+spanning-tree mode mstp
+!
+system l1
+   unsupported speed action error
+   unsupported error-correction action error
+!
+interface Ethernet1
+   description Leaf1
+   no switchport
+   ip address 10.0.0.2/30
+!
+interface Ethernet2
+   description Leaf2
+   no switchport
+   ip address 10.0.0.10/30
+!
+interface Ethernet3
+   description Leaf3
+   no switchport
+   ip address 10.0.0.18/30
+!
+interface Ethernet4
+   shutdown
+!
+interface Ethernet5
+   shutdown
+!
+interface Ethernet6
+   shutdown
+!
+interface Ethernet7
+   shutdown
+!
+interface Ethernet8
+!
+interface Loopback1
+   ip address 10.10.10.1/32
+!
+interface Management1
+!
+ip routing
+!
+ip prefix-list RM_FROM_CONNECTED seq 10 deny 10.0.0.0/24 le 32
+ip prefix-list RM_FROM_CONNECTED seq 20 permit 0.0.0.0/0 le 32
+!
+route-map RM_FROM_CONNECTED_BGP permit 10
+   match ip address prefix-list RM_FROM_CONNECTED
+!
+router bgp 64601
+   router-id 10.10.10.1
+   maximum-paths 3
+   neighbor LEAFS peer group
+   neighbor LEAFS bfd
+   neighbor LEAFS timers 3 9
+   neighbor 10.0.0.1 peer group LEAFS
+   neighbor 10.0.0.1 remote-as 64602
+   neighbor 10.0.0.1 description Leaf1
+   neighbor 10.0.0.9 peer group LEAFS
+   neighbor 10.0.0.9 remote-as 64603
+   neighbor 10.0.0.9 description Leaf2
+   neighbor 10.0.0.17 peer group LEAFS
+   neighbor 10.0.0.17 remote-as 64604
+   neighbor 10.0.0.17 description Leaf3
+   !
+   address-family ipv4
+      neighbor LEAFS activate
+      redistribute connected route-map RM_FROM_CONNECTED_BGP
+!
+router multicast
+   ipv4
+      software-forwarding kernel
+   !
+   ipv6
+      software-forwarding kernel
+!
+end
