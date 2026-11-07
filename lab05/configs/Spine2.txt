@@ -1,0 +1,108 @@
+Spine-2#sh run
+! Command: show running-config
+! device: Spine-2 (vEOS-lab, EOS-4.33.1.1F)
+!
+! boot system flash:/vEOS-lab.swi
+!
+no aaa root
+!
+no service interface inactive port-id allocation disabled
+!
+transceiver qsfp default-mode 4x10G
+!
+service routing protocols model multi-agent
+!
+hostname Spine-2
+!
+spanning-tree mode mstp
+!
+system l1
+   unsupported speed action error
+   unsupported error-correction action error
+!
+interface Ethernet1
+   description Leaf1
+   no switchport
+   ip address 10.0.0.6/30
+!
+interface Ethernet2
+   description Leaf2
+   no switchport
+   ip address 10.0.0.14/30
+!
+interface Ethernet3
+   description Leaf3
+   no switchport
+   ip address 10.0.0.22/30
+!
+interface Ethernet4
+   shutdown
+!
+interface Ethernet5
+   shutdown
+!
+interface Ethernet6
+   shutdown
+!
+interface Ethernet7
+   shutdown
+!
+interface Loopback0
+   ip address 10.10.10.2/32
+!
+interface Management1
+!
+ip routing
+!
+ip prefix-list RM_FROM_CONNECTED seq 10 deny 10.0.0.0/24 le 32
+ip prefix-list RM_FROM_CONNECTED seq 20 permit 0.0.0.0/0 le 32
+!
+route-map RM_FROM_CONNECTED_BGP permit 10
+   match ip address prefix-list RM_FROM_CONNECTED
+!
+router bgp 64601
+   router-id 10.10.10.2
+   maximum-paths 3
+   neighbor EVPN-LEAF peer group
+   neighbor EVPN-LEAF update-source Loopback0
+   neighbor EVPN-LEAF ebgp-multihop 5
+   neighbor EVPN-LEAF send-community extended
+   neighbor LEAFS peer group
+   neighbor LEAFS bfd
+   neighbor LEAFS timers 3 9
+   neighbor 10.0.0.5 peer group LEAFS
+   neighbor 10.0.0.5 remote-as 64602
+   neighbor 10.0.0.5 description Leaf1
+   neighbor 10.0.0.13 peer group LEAFS
+   neighbor 10.0.0.13 remote-as 64603
+   neighbor 10.0.0.13 description Leaf2
+   neighbor 10.0.0.21 peer group LEAFS
+   neighbor 10.0.0.21 remote-as 64604
+   neighbor 10.0.0.21 description Leaf3
+   neighbor 10.10.10.3 peer group EVPN-LEAF
+   neighbor 10.10.10.3 remote-as 64602
+   neighbor 10.10.10.3 description EVPN-Leaf1
+   neighbor 10.10.10.4 peer group EVPN-LEAF
+   neighbor 10.10.10.4 remote-as 64603
+   neighbor 10.10.10.4 description EVPN-Leaf2
+   neighbor 10.10.10.5 peer group EVPN-LEAF
+   neighbor 10.10.10.5 remote-as 64604
+   neighbor 10.10.10.5 description EVPN-Leaf3
+   !
+   address-family evpn
+      neighbor EVPN-LEAF activate
+      neighbor EVPN-LEAF next-hop-unchanged
+   !
+   address-family ipv4
+      no neighbor EVPN-LEAF activate
+      neighbor LEAFS activate
+      redistribute connected route-map RM_FROM_CONNECTED_BGP
+!
+router multicast
+   ipv4
+      software-forwarding kernel
+   !
+   ipv6
+      software-forwarding kernel
+!
+end

@@ -1,0 +1,112 @@
+Leaf-1#sh run
+! Command: show running-config
+! device: Leaf-1 (vEOS-lab, EOS-4.33.1.1F)
+!
+! boot system flash:/vEOS-lab.swi
+!
+no aaa root
+!
+no service interface inactive port-id allocation disabled
+!
+transceiver qsfp default-mode 4x10G
+!
+service routing protocols model multi-agent
+!
+hostname Leaf-1
+!
+spanning-tree mode mstp
+!
+system l1
+   unsupported speed action error
+   unsupported error-correction action error
+!
+vlan 100
+   name VXLAN-L2-100
+!
+interface Ethernet1
+   description Spine1
+   no switchport
+   ip address 10.0.0.1/30
+!
+interface Ethernet2
+   description Spine2
+   no switchport
+   ip address 10.0.0.5/30
+!
+interface Ethernet3
+   description To-PC1
+   switchport access vlan 100
+!
+interface Ethernet4
+   shutdown
+!
+interface Ethernet5
+   shutdown
+!
+interface Ethernet6
+   shutdown
+!
+interface Ethernet7
+   shutdown
+!
+interface Loopback1
+   ip address 10.10.10.3/32
+!
+interface Management1
+!
+interface Vxlan1
+   vxlan source-interface Loopback1
+   vxlan udp-port 4789
+   vxlan vlan 100 vni 10100
+!
+ip routing
+!
+ip prefix-list RM_FROM_CONNECTED seq 10 deny 10.0.0.0/24 le 32
+ip prefix-list RM_FROM_CONNECTED seq 20 permit 0.0.0.0/0 le 32
+!
+route-map RM_FROM_CONNECTED_BGP permit 10
+   match ip address prefix-list RM_FROM_CONNECTED
+!
+router bgp 64602
+   router-id 10.10.10.3
+   maximum-paths 2 ecmp 2
+   neighbor EVPN-SPINE peer group
+   neighbor EVPN-SPINE remote-as 64601
+   neighbor EVPN-SPINE update-source Loopback1
+   neighbor EVPN-SPINE ebgp-multihop 5
+   neighbor EVPN-SPINE send-community extended
+   neighbor SPINE peer group
+   neighbor SPINE bfd
+   neighbor SPINE timers 3 9
+   neighbor 10.0.0.2 peer group SPINE
+   neighbor 10.0.0.2 remote-as 64601
+   neighbor 10.0.0.2 description Spine1
+   neighbor 10.0.0.6 peer group SPINE
+   neighbor 10.0.0.6 remote-as 64601
+   neighbor 10.0.0.6 description Spine2
+   neighbor 10.10.10.1 peer group EVPN-SPINE
+   neighbor 10.10.10.1 description EVPN-Spine1
+   neighbor 10.10.10.2 peer group EVPN-SPINE
+   neighbor 10.10.10.2 description EVPN-Spine2
+   !
+   vlan 100
+      rd 10.10.10.3:10100
+      route-target both 64600:10100
+      redistribute learned
+   !
+   address-family evpn
+      neighbor EVPN-SPINE activate
+   !
+   address-family ipv4
+      no neighbor EVPN-SPINE activate
+      neighbor SPINE activate
+      redistribute connected route-map RM_FROM_CONNECTED_BGP
+!
+router multicast
+   ipv4
+      software-forwarding kernel
+   !
+   ipv6
+      software-forwarding kernel
+!
+end
